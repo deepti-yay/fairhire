@@ -9,12 +9,11 @@ Live demo:https://fairhire-ckrun3e5r8yfacqwp36bf2.streamlit.app/
 - Audits gender bias using Fairlearn and reduces it with a mitigation step
 
 ## Results
-|--------- | Before | After |
-|----------|--------|-------|
-| Accuracy | 0.680 | 0.683 |
-| Demographic parity difference | 0.187 | 0.082 |
-| Equalized odds difference | 0.155 | 0.024 |
-
+| | Before | After |
+|---|---|---|
+| Accuracy | 0.757 | 0.733 |
+| Demographic parity difference | 0.191 | 0.025 |
+| Equalized odds difference | 0.129 | 0.127 |
 ## Tech
 Python, scikit-learn, SHAP, Fairlearn, Streamlit
 
