@@ -105,6 +105,41 @@ def reasons(vals, row, cols):
     return [fmt(i) for i in pos], [fmt(i) for i in neg]
 
 
+
+def contrib_chart(vals, row, cols):
+    """Horizontal bar chart of each feature's push toward / away from 'hired'."""
+    order = np.argsort(np.abs(vals))
+    names = [f"{LABELS[cols[i]]} = {row.iloc[0, i]:g}" for i in order]
+    v = vals[order]
+    fig, ax = plt.subplots(figsize=(7, 4))
+    ax.barh(names, v, color=["#2E9E6B" if x > 0 else "#D9534F" for x in v])
+    ax.axvline(0, color="grey", linewidth=0.8)
+    ax.set_xlabel("Push toward 'hired' (right, green)  /  toward 'rejected' (left, red)")
+    fig.tight_layout()
+    return fig
+
+
+def beeswarm_chart(vals, X):
+    """Simple SHAP-style dot plot drawn with plain matplotlib."""
+    rng = np.random.default_rng(0)
+    order = np.argsort(np.abs(vals).mean(0))
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    sc = None
+    for pos, i in enumerate(order):
+        col = X.iloc[:, i].values.astype(float)
+        rngv = col.max() - col.min()
+        norm = (col - col.min()) / (rngv if rngv else 1)
+        y = pos + rng.uniform(-0.28, 0.28, len(col))
+        sc = ax.scatter(vals[:, i], y, c=norm, cmap="coolwarm", s=10, alpha=0.8)
+    ax.set_yticks(range(len(order)))
+    ax.set_yticklabels([LABELS[X.columns[i]] for i in order])
+    ax.axvline(0, color="grey", linewidth=0.8)
+    ax.set_xlabel("Impact on decision (right = toward hired)")
+    cb = fig.colorbar(sc, ax=ax)
+    cb.set_label("Feature value (low to high)")
+    fig.tight_layout()
+    return fig
+
 app = build()
 
 # ---------------------------------------------------------------- UI
@@ -164,10 +199,7 @@ with t1:
             if gap >= 6:
                 st.warning("Career gap is a proxy for gender in this data. See the Fairness audit tab.")
 
-        exp = shap.Explanation(values=vals, base_values=base,
-                               data=row.iloc[0].values, feature_names=[LABELS[c] for c in row.columns])
-        shap.plots.waterfall(exp, show=False)
-        st.pyplot(plt.gcf(), clear_figure=True)
+        st.pyplot(contrib_chart(vals, row, list(row.columns)), clear_figure=True)
 
 # ------------------------------------------------ Tab 2
 with t2:
@@ -180,8 +212,7 @@ with t2:
     st.write("Career gap appears in the top features. That matters, because it is "
              "linked to gender in this dataset (see the Fairness audit).")
     st.subheader("Detailed view")
-    shap.summary_plot(app["vals"], app["X_te"], show=False)
-    st.pyplot(plt.gcf(), clear_figure=True)
+    st.pyplot(beeswarm_chart(app["vals"], app["X_te"]), clear_figure=True)
 
 # ------------------------------------------------ Tab 3
 with t3:
